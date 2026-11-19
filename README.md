@@ -1,0 +1,36 @@
+# molstar-lab
+
+`jupyter lab`, but for the [Mol*](https://molstar.org) viewer. Run it in any folder and Mol* opens in your browser, with a file browser for everything under that folder.
+
+```bash
+cd ~/my_project/output
+molstar            # or: molstar-lab
+```
+
+## What you get
+- A sidebar file browser (folders, breadcrumbs, filter). New files show up on their own every 3 s.
+- **Click** a file to open it. **⊕ or Shift-click** adds it to the current scene. **⌘-click or the checkboxes** select several files at once.
+- Tick a **topology/structure + trajectory** (e.g. `.psf` + `.dcd`, `.gro` + `.xtc`) and press *Open selected* to load an MD run.
+- **⤓** searches every subfolder for files Mol* can read. **⚛** hides files Mol* can't open.
+- `.gz` files are decompressed on the fly. Supported: PDB/mmCIF/BCIF, PDBQT, GRO, MOL/MOL2/SDF, XYZ, PSF/PRMTOP/TOP, XTC/TRR/DCD/NC/LAMMPS, CCP4/MRC/MAP/DSN6/CUBE/DX, and `.molj`/`.molx`/`.mvsj` sessions.
+- You can also drag files from Finder straight into the viewer.
+
+## Options
+```
+molstar [folder | file.pdb]   folder to serve (default .), or one file to open right away
+  -p, --port 8890             port to try first (moves up if that one is busy)
+  --no-browser                don't open a tab
+  --hidden                    show dotfiles
+  --host 0.0.0.0              share on the network (anyone who can reach the port can read the folder)
+```
+
+The server only listens on 127.0.0.1 by default and won't serve paths outside the folder you gave it. It needs only the Python standard library.
+The Mol* build (v5.13.1) is downloaded once into `~/.cache/molstar-lab/` and works offline after that. Set `MOLSTAR_LAB_MOLSTAR_VERSION` to use a different version.
+
+## Install
+```bash
+python3 -m venv ~/.local/share/molstar-lab/venv
+~/.local/share/molstar-lab/venv/bin/pip install -e .
+ln -sf ~/.local/share/molstar-lab/venv/bin/molstar ~/.local/bin/molstar
+ln -sf ~/.local/share/molstar-lab/venv/bin/molstar-lab ~/.local/bin/molstar-lab
+```

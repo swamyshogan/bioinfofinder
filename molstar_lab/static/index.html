@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mol* Lab</title>
+<link rel="stylesheet" href="/static/molstar.css">
+<style>
+  :root {
+    --bg: #ffffff; --panel: #f6f7f9; --line: #e2e5ea; --text: #1d2430; --muted: #6b7484;
+    --hover: #eaedf2; --sel: #dbe7ff; --accent: #2f6fde; --danger: #c2413a;
+    --k-structure: #2f6fde; --k-trajectory: #a35bd6; --k-topology: #1f9d8a;
+    --k-volume: #d9822b; --k-session: #c2413a; --k-dir: #c9a227;
+    --sidebar-w: 300px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15181d; --panel: #1b1f26; --line: #2b313b; --text: #dfe4ec; --muted: #8b94a5;
+      --hover: #252b35; --sel: #24365a; --accent: #6b9cff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15181d; --panel: #1b1f26; --line: #2b313b; --text: #dfe4ec; --muted: #8b94a5;
+    --hover: #252b35; --sel: #24365a; --accent: #6b9cff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; overflow: hidden; }
+  #app { display: flex; height: 100vh; }
+
+  /* ---------- sidebar ---------- */
+  #sidebar { width: var(--sidebar-w); min-width: 200px; max-width: 70vw; display: flex; flex-direction: column;
+    background: var(--panel); border-right: 1px solid var(--line); }
+  #app.collapsed #sidebar { display: none; }
+  header { display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px; }
+  header .logo { font-weight: 700; letter-spacing: .2px; }
+  header .logo span { color: var(--accent); }
+  header .root { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; direction: rtl; text-align: left; }
+  .iconbtn { border: 0; background: transparent; color: var(--muted); cursor: pointer; border-radius: 5px;
+    width: 26px; height: 26px; display: inline-grid; place-items: center; font-size: 14px; flex: none; }
+  .iconbtn:hover { background: var(--hover); color: var(--text); }
+  .iconbtn.on { color: var(--accent); background: var(--sel); }
+
+  .toolbar { display: flex; gap: 4px; padding: 0 8px 6px; align-items: center; }
+  .search { flex: 1; display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 6px; padding: 0 8px; height: 28px; }
+  .search:focus-within { border-color: var(--accent); }
+  .search input { border: 0; outline: 0; background: transparent; color: var(--text); flex: 1; font: inherit; min-width: 0; }
+  .crumbs { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 10px 6px; font-size: 12px; color: var(--muted); }
+  .crumbs a { color: var(--muted); cursor: pointer; padding: 1px 3px; border-radius: 4px; text-decoration: none; }
+  .crumbs a:hover { background: var(--hover); color: var(--text); }
+  .crumbs a:last-child { color: var(--text); font-weight: 600; }
+
+  #list { flex: 1; overflow-y: auto; border-top: 1px solid var(--line); padding: 4px 0; }
+  .row { display: flex; align-items: center; gap: 6px; padding: 3px 8px 3px 6px; cursor: pointer; user-select: none; }
+  .row:hover { background: var(--hover); }
+  .row.checked { background: var(--sel); }
+  .row.loaded .name::after { content: " ●"; color: var(--accent); font-size: 9px; vertical-align: middle; }
+  .row input[type=checkbox] { margin: 0; accent-color: var(--accent); visibility: hidden; }
+  .row:hover input[type=checkbox], .row.checked input[type=checkbox], #list.selecting .row input[type=checkbox] { visibility: visible; }
+  .row.dir input[type=checkbox] { visibility: hidden !important; }
+  .ico { width: 18px; text-align: center; flex: none; font-size: 13px; }
+  .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .name small { color: var(--muted); }
+  .meta { color: var(--muted); font-size: 11px; flex: none; font-variant-numeric: tabular-nums; }
+  .row .add { visibility: hidden; }
+  .row:hover .add { visibility: visible; }
+  .row.other { color: var(--muted); }
+  .empty { padding: 24px 16px; color: var(--muted); text-align: center; }
+  .badge { font-size: 10px; padding: 0 5px; border-radius: 8px; border: 1px solid currentColor; flex: none; opacity: .85; }
+
+  footer { border-top: 1px solid var(--line); padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .actions { display: flex; gap: 6px; }
+  .btn { flex: 1; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px;
+    padding: 5px 8px; cursor: pointer; font: inherit; white-space: nowrap; }
+  .btn:hover:not(:disabled) { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  #status { font-size: 11px; color: var(--muted); min-height: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #status.err { color: var(--danger); }
+  .hint { font-size: 11px; color: var(--muted); }
+
+  #resizer { width: 5px; cursor: col-resize; flex: none; margin-left: -3px; z-index: 5; }
+  #resizer:hover, #resizer.drag { background: var(--accent); opacity: .5; }
+  #app.collapsed #resizer { display: none; }
+
+  /* ---------- viewer ---------- */
+  #main { flex: 1; position: relative; min-width: 0; }
+  #viewer { position: absolute; inset: 0; }
+  #expand { position: absolute; top: 8px; left: 8px; z-index: 10; display: none; background: var(--panel);
+    border: 1px solid var(--line); }
+  #app.collapsed #expand { display: inline-grid; }
+  #dropzone { position: absolute; inset: 0; z-index: 20; display: none; place-items: center; font-size: 18px;
+    background: color-mix(in srgb, var(--accent) 18%, transparent); border: 3px dashed var(--accent); color: var(--text); }
+  #dropzone.on { display: grid; }
+  #boot { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <header>
+      <div class="logo">Mol<span>*</span> Lab</div>
+      <div class="root" id="root" title=""></div>
+      <button class="iconbtn" id="themeBtn" title="Toggle light/dark">◐</button>
+      <button class="iconbtn" id="collapseBtn" title="Hide file browser">⟨</button>
+    </header>
+    <div class="toolbar">
+      <label class="search"><span style="color:var(--muted);margin-right:6px">⌕</span>
+        <input id="filter" placeholder="Filter this folder…" autocomplete="off" spellcheck="false"></label>
+      <button class="iconbtn" id="deepBtn" title="Search all subfolders for structure files">⤓</button>
+      <button class="iconbtn" id="molOnlyBtn" title="Show only files Mol* can open">⚛</button>
+      <button class="iconbtn" id="upBtn" title="Up one folder">↑</button>
+      <button class="iconbtn" id="refreshBtn" title="Refresh">↻</button>
+    </div>
+    <nav class="crumbs" id="crumbs"></nav>
+    <div id="list"></div>
+    <footer>
+      <div class="actions">
+        <button class="btn primary" id="openSelBtn" disabled>Open selected</button>
+        <button class="btn" id="addSelBtn" disabled>Add</button>
+        <button class="btn" id="clearBtn" title="Remove everything from the 3D scene">Clear scene</button>
+      </div>
+      <div id="status"></div>
+      <div class="hint">Click = open · ⊕ / ⇧-click = add to scene · tick a topology + trajectory to load an MD run</div>
+    </footer>
+  </aside>
+  <div id="resizer"></div>
+  <main id="main">
+    <div id="viewer"><div id="boot">Loading Mol*…</div></div>
+    <button class="iconbtn" id="expand" title="Show file browser">⟩</button>
+    <div id="dropzone">Drop files to open in Mol*</div>
+  </main>
+</div>
+
+<script src="/static/molstar.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('molstar-lab:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('molstar-lab:' + k, JSON.stringify(v)); } catch {} },
+  };
+
+  const KIND = {
+    dir:        { ico: '📁', color: 'var(--k-dir)' },
+    structure:  { ico: '⬡', color: 'var(--k-structure)', label: 'struct' },
+    trajectory: { ico: '▶', color: 'var(--k-trajectory)', label: 'traj' },
+    topology:   { ico: '⌬', color: 'var(--k-topology)', label: 'top' },
+    volume:     { ico: '▦', color: 'var(--k-volume)', label: 'map' },
+    session:    { ico: '◈', color: 'var(--k-session)', label: 'session' },
+  };
+
+  const state = {
+    path: decodeURIComponent(location.hash.slice(1) || ''),
+    entries: [], sig: '',
+    deep: false, molOnly: store.get('molOnly', false),
+    checked: new Set(), loaded: new Set(), allSeen: new Map(),
+    viewer: null,
+  };
+
+  // ---------- theme ----------
+  const theme = store.get('theme', null);
+  if (theme) document.documentElement.dataset.theme = theme;
+  $('themeBtn').onclick = () => {
+    const cur = document.documentElement.dataset.theme ||
+      (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next; store.set('theme', next);
+  };
+
+  // ---------- status ----------
+  let statusTimer;
+  function status(msg, err = false, sticky = false) {
+    const el = $('status'); el.textContent = msg; el.className = err ? 'err' : ''; el.title = msg;
+    clearTimeout(statusTimer);
+    if (!sticky && msg) statusTimer = setTimeout(() => { el.textContent = ''; }, err ? 10000 : 4000);
+  }
+
+  // ---------- Mol* viewer ----------
+  async function initViewer() {
+    if (!window.molstar) { $('boot').textContent = 'Could not load Mol* (offline and not cached?)'; return; }
+    state.viewer = await molstar.Viewer.create('viewer', {
+      layoutIsExpanded: false,
+      layoutShowControls: true,
+      layoutShowRemoteState: false,
+      layoutShowSequence: true,
+      layoutShowLog: true,
+      layoutShowLeftPanel: true,
+      viewportShowExpand: true,
+      viewportShowSelectionMode: true,
+      viewportShowAnimation: true,
+      collapseLeftPanel: true,
+      pdbProvider: 'rcsb',
+      emdbProvider: 'rcsb',
+    });
+  }
+
+  const fileUrl = (p) => '/files/' + p.split('/').map(encodeURIComponent).join('/');
+  const stripComp = (n) => n.replace(/\.gz$/i, ''); // server gunzips .gz for us
+
+  async function fetchAsFile(entry) {
+    const r = await fetch(fileUrl(entry.path));
+    if (!r.ok) throw new Error(`${entry.path}: HTTP ${r.status}`);
+    const blob = await r.blob();
+    return new File([blob], stripComp(entry.name));
+  }
+
+  const ext = (n) => { const m = stripComp(n).toLowerCase().match(/\.([a-z0-9]+)$/); return m ? m[1] : ''; };
+  const MODEL_FMT = { pdb: 'pdb', ent: 'pdb', cif: 'mmcif', mmcif: 'mmcif', bcif: 'mmcif', gro: 'gro', pdbqt: 'pdbqt', xyz: 'xyz', mol: 'mol', sdf: 'sdf', mol2: 'mol2' };
+  const TOP_FMT = { psf: 'psf', prmtop: 'prmtop', parm7: 'prmtop', top: 'top' };
+  const COORD_FMT = { xtc: 'xtc', trr: 'trr', dcd: 'dcd', nc: 'nctraj', nctraj: 'nctraj', lammpstrj: 'lammpstrj' };
+
+  async function loadTrajectory(model, coords) {
+    const me = ext(model.name), ce = ext(coords.name);
+    const isTop = !!TOP_FMT[me];
+    await state.viewer.loadTrajectory({
+      model: isTop
+        ? { kind: 'topology-url', url: fileUrl(model.path), format: TOP_FMT[me], isBinary: false }
+        : { kind: 'model-url', url: fileUrl(model.path), format: MODEL_FMT[me] || 'pdb', isBinary: me === 'bcif' },
+      modelLabel: model.name,
+      coordinates: { kind: 'coordinates-url', url: fileUrl(coords.path), format: COORD_FMT[ce], isBinary: ce !== 'lammpstrj' },
+      coordinatesLabel: coords.name,
+      preset: 'default',
+    });
+  }
+
+  async function open(entries, { add = false } = {}) {
+    if (!state.viewer) { status('Mol* is still loading…', true); return; }
+    entries = entries.filter(e => !e.dir);
+    if (!entries.length) return;
+    const names = entries.map(e => e.name).join(', ');
+    status(`${add ? 'Adding' : 'Opening'} ${names}…`, false, true);
+    try {
+      if (!add) { await state.viewer.plugin.clear(); state.loaded.clear(); }
+      const trajs = entries.filter(e => e.kind === 'trajectory');
+      const models = entries.filter(e => e.kind === 'structure' || e.kind === 'topology');
+      if (trajs.length === 1 && models.length === 1 && entries.length === 2) {
+        await loadTrajectory(models[0], trajs[0]);
+      } else {
+        const files = await Promise.all(entries.map(fetchAsFile));
+        await state.viewer.loadFiles(files);
+      }
+      entries.forEach(e => state.loaded.add(e.path));
+      status(`Loaded ${names}`);
+    } catch (e) {
+      console.error(e);
+      status(`Failed: ${e.message || e}`, true);
+    }
+    render();
+  }
+
+  // ---------- file browser ----------
+  async function api(url) {
+    const r = await fetch(url);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.statusText);
+    return j;
+  }
+
+  async function refresh({ quiet = false } = {}) {
+    try {
+      const q = $('filter').value.trim();
+      const j = state.deep
+        ? await api('/api/find?q=' + encodeURIComponent(q))
+        : await api('/api/list?path=' + encodeURIComponent(state.path));
+      if (!state.deep) state.path = j.path;
+      const sig = JSON.stringify(j.entries.map(e => [e.path, e.size, e.mtime]));
+      if (quiet && sig === state.sig) return;
+      state.sig = sig; state.entries = j.entries;
+      render();
+      if (j.truncated) status('Showing first 3000 matches — refine the filter', true);
+    } catch (e) {
+      if (!quiet) {
+        status(e.message, true);
+        if (state.path) { state.path = ''; location.hash = ''; refresh(); }
+      }
+    }
+  }
+
+  function fmtSize(n) {
+    if (n == null) return '';
+    const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return (i ? n.toFixed(n < 10 ? 1 : 0) : n) + ' ' + u[i];
+  }
+
+  function visibleEntries() {
+    const q = $('filter').value.trim().toLowerCase();
+    return state.entries.filter(e => {
+      if (state.molOnly && !e.dir && !e.kind) return false;
+      if (!state.deep && q && !e.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  function render() {
+    state.entries.forEach(e => state.allSeen.set(e.path, e)); // so ticks survive folder changes
+    // breadcrumbs
+    const crumbs = $('crumbs'); crumbs.innerHTML = '';
+    const parts = state.path ? state.path.split('/') : [];
+    const mk = (label, p) => { const a = document.createElement('a'); a.textContent = label; a.onclick = () => go(p); return a; };
+    if (state.deep) {
+      const a = document.createElement('a'); a.textContent = '🔎 all structure files under root'; a.onclick = () => setDeep(false);
+      crumbs.append(a);
+    } else {
+      crumbs.append(mk('⌂ ' + (window.__rootName || 'root'), ''));
+      parts.forEach((p, i) => { crumbs.append(document.createTextNode('/')); crumbs.append(mk(p, parts.slice(0, i + 1).join('/'))); });
+    }
+
+    const list = $('list'); list.innerHTML = '';
+    list.classList.toggle('selecting', state.checked.size > 0);
+    const items = visibleEntries();
+    if (!items.length) {
+      const d = document.createElement('div'); d.className = 'empty';
+      d.textContent = state.deep ? 'No structure files found.' : (state.molOnly ? 'No Mol*-readable files here.' : 'Empty folder.');
+      list.append(d);
+    }
+    for (const e of items) {
+      const row = document.createElement('div');
+      const k = e.dir ? KIND.dir : KIND[e.kind];
+      row.className = 'row' + (e.dir ? ' dir' : '') + (!e.dir && !e.kind ? ' other' : '') +
+        (state.checked.has(e.path) ? ' checked' : '') + (state.loaded.has(e.path) ? ' loaded' : '');
+      row.title = e.path;
+
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = state.checked.has(e.path);
+      cb.onclick = (ev) => { ev.stopPropagation(); toggleCheck(e); };
+      const ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = k ? k.ico : '·';
+      if (k) ico.style.color = k.color;
+      const name = document.createElement('span'); name.className = 'name';
+      if (state.deep && e.path.includes('/')) {
+        const dir = e.path.slice(0, e.path.lastIndexOf('/') + 1);
+        name.innerHTML = '<small></small>'; name.firstChild.textContent = dir; name.append(e.name);
+      } else name.textContent = e.name;
+      row.append(cb, ico, name);
+      if (!e.dir) {
+        if (k && k.label) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = k.label; b.style.color = k.color; row.append(b); }
+        const m = document.createElement('span'); m.className = 'meta'; m.textContent = fmtSize(e.size); row.append(m);
+        const add = document.createElement('button'); add.className = 'iconbtn add'; add.textContent = '⊕'; add.title = 'Add to current scene';
+        add.onclick = (ev) => { ev.stopPropagation(); open([e], { add: true }); };
+        row.append(add);
+      }
+      row.onclick = (ev) => {
+        if (e.dir) return go(e.path);
+        if (ev.metaKey || ev.ctrlKey) return toggleCheck(e);
+        open([e], { add: ev.shiftKey });
+      };
+      list.append(row);
+    }
+    const n = state.checked.size;
+    $('openSelBtn').disabled = $('addSelBtn').disabled = n === 0;
+    $('openSelBtn').textContent = n ? `Open selected (${n})` : 'Open selected';
+    $('deepBtn').classList.toggle('on', state.deep);
+    $('molOnlyBtn').classList.toggle('on', state.molOnly);
+    $('upBtn').disabled = !state.path || state.deep;
+    $('filter').placeholder = state.deep ? 'Search all subfolders…' : 'Filter this folder…';
+  }
+
+  const checkedEntries = () => [...state.checked].map(p => state.allSeen.get(p)).filter(Boolean);
+
+  function toggleCheck(e) {
+    state.checked.has(e.path) ? state.checked.delete(e.path) : state.checked.add(e.path);
+    render();
+  }
+
+  function go(p) {
+    state.path = p; state.deep = false; $('filter').value = '';
+    location.hash = p ? encodeURIComponent(p) : '';
+    state.sig = ''; refresh();
+  }
+  function setDeep(on) { state.deep = on; state.sig = ''; refresh(); }
+
+  // ---------- wiring ----------
+  $('upBtn').onclick = () => { if (state.path) go(state.path.split('/').slice(0, -1).join('/')); };
+  $('refreshBtn').onclick = () => { state.sig = ''; refresh(); };
+  $('deepBtn').onclick = () => setDeep(!state.deep);
+  $('molOnlyBtn').onclick = () => { state.molOnly = !state.molOnly; store.set('molOnly', state.molOnly); render(); };
+  let filterTimer;
+  $('filter').oninput = () => {
+    if (state.deep) { clearTimeout(filterTimer); filterTimer = setTimeout(() => { state.sig = ''; refresh(); }, 200); }
+    else render();
+  };
+  $('filter').onkeydown = (ev) => {
+    if (ev.key === 'Enter') { const v = visibleEntries().filter(e => !e.dir); if (v.length === 1) open(v); else if (!state.deep && v.length === 0) setDeep(true); }
+    if (ev.key === 'Escape') { $('filter').value = ''; state.deep ? setDeep(false) : render(); }
+  };
+  $('openSelBtn').onclick = () => { const s = checkedEntries(); state.checked.clear(); open(s); };
+  $('addSelBtn').onclick = () => { const s = checkedEntries(); state.checked.clear(); open(s, { add: true }); };
+  $('clearBtn').onclick = async () => { if (state.viewer) { await state.viewer.plugin.clear(); state.loaded.clear(); render(); status('Scene cleared'); } };
+  window.addEventListener('hashchange', () => {
+    const p = decodeURIComponent(location.hash.slice(1) || '');
+    if (p !== state.path) go(p);
+  });
+
+  // collapse + resize sidebar
+  const app = $('app');
+  const setCollapsed = (c) => { app.classList.toggle('collapsed', c); store.set('collapsed', c); setTimeout(() => state.viewer?.handleResize(), 0); };
+  $('collapseBtn').onclick = () => setCollapsed(true);
+  $('expand').onclick = () => setCollapsed(false);
+  if (store.get('collapsed', false)) app.classList.add('collapsed');
+  const w = store.get('width', null); if (w) document.documentElement.style.setProperty('--sidebar-w', w + 'px');
+  $('resizer').onpointerdown = (ev) => {
+    const r = $('resizer'); r.classList.add('drag'); r.setPointerCapture(ev.pointerId);
+    r.onpointermove = (m) => document.documentElement.style.setProperty('--sidebar-w', Math.max(200, m.clientX) + 'px');
+    r.onpointerup = (u) => { r.classList.remove('drag'); r.onpointermove = r.onpointerup = null;
+      store.set('width', Math.max(200, u.clientX)); state.viewer?.handleResize(); };
+  };
+
+  // drag-and-drop of files from Finder straight into the viewer
+  let dragDepth = 0;
+  const dz = $('dropzone');
+  window.addEventListener('dragenter', (e) => { if (e.dataTransfer?.types?.includes('Files')) { dragDepth++; dz.classList.add('on'); } });
+  window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; dz.classList.remove('on'); } });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', async (e) => {
+    e.preventDefault(); dragDepth = 0; dz.classList.remove('on');
+    const files = [...(e.dataTransfer?.files || [])];
+    if (files.length && state.viewer) { status('Opening dropped files…', false, true); await state.viewer.loadFiles(files); status('Loaded ' + files.map(f => f.name).join(', ')); }
+  }, true);
+
+  // poll current folder so new outputs show up (like Jupyter's file browser)
+  setInterval(() => { if (!document.hidden && !state.deep) refresh({ quiet: true }); }, 3000);
+
+  // ---------- boot ----------
+  (async () => {
+    try {
+      const info = await api('/api/info');
+      window.__rootName = info.name;
+      $('root').textContent = info.root; $('root').title = info.root;
+      document.title = `${info.name} — Mol* Lab`;
+    } catch {}
+    await refresh();
+    await initViewer();
+    const toOpen = new URLSearchParams(location.search).get('open');
+    if (toOpen) {
+      const name = toOpen.split('/').pop();
+      const kind = state.entries.find(e => e.path === toOpen)?.kind;
+      await open([{ name, path: toOpen, kind }]);
+      history.replaceState(null, '', location.pathname + location.hash);
+    }
+  })();
+})();
+</script>
+</body>
+</html>
