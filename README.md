@@ -7,6 +7,15 @@ cd ~/my_project/output
 molstar            # or: molstar-lab
 ```
 
+## Install
+Needs Python 3.8+ and [pipx](https://pipx.pypa.io):
+
+```bash
+pipx install git+https://github.com/swamyshogan/molstar-lab.git
+```
+
+No pipx yet? On macOS run `brew install pipx && pipx ensurepath`; on Linux run `python3 -m pip install --user pipx && python3 -m pipx ensurepath`. Then open a new terminal.
+
 ## What you get
 - A sidebar file browser (folders, breadcrumbs, filter). New files show up on their own every 3 s.
 - **Click** a file to open it. **⊕ or Shift-click** adds it to the current scene. **⌘-click or the checkboxes** select several files at once.
@@ -27,10 +36,15 @@ molstar [folder | file.pdb]   folder to serve (default .), or one file to open r
 The server only listens on 127.0.0.1 by default and won't serve paths outside the folder you gave it. It needs only the Python standard library.
 The Mol* build (v5.13.1) is downloaded once into `~/.cache/molstar-lab/` and works offline after that. Set `MOLSTAR_LAB_MOLSTAR_VERSION` to use a different version.
 
-## Install
+## Update / uninstall
 ```bash
-python3 -m venv ~/.local/share/molstar-lab/venv
-~/.local/share/molstar-lab/venv/bin/pip install -e .
-ln -sf ~/.local/share/molstar-lab/venv/bin/molstar ~/.local/bin/molstar
-ln -sf ~/.local/share/molstar-lab/venv/bin/molstar-lab ~/.local/bin/molstar-lab
+pipx upgrade molstar-lab
+pipx uninstall molstar-lab
+```
+
+## Development
+```bash
+git clone https://github.com/swamyshogan/molstar-lab.git
+cd molstar-lab
+pipx install -e .    # edits to the code take effect immediately
 ```
