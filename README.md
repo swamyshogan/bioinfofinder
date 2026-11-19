@@ -2,6 +2,8 @@
 
 `jupyter lab`, but for the [Mol*](https://molstar.org) viewer. Run it in any folder and Mol* opens in your browser, with a file browser for everything under that folder.
 
+![molstar-lab demo: open a crystal structure, search all seed folders, overlay five models](docs/demo.gif)
+
 ```bash
 cd ~/my_project/output
 molstar            # or: molstar-lab

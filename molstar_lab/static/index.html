@@ -223,6 +223,15 @@
     if (!entries.length) return;
     const names = entries.map(e => e.name).join(', ');
     status(`${add ? 'Adding' : 'Opening'} ${names}…`, false, true);
+    // Mol*'s "Open Files" action jumps the left panel to the State Tree; put it back afterwards.
+    const plugin = state.viewer.plugin;
+    const prevTab = plugin.behaviors.layout.leftPanelTabName.value;
+    const prevLeft = plugin.layout.state.regionState.left;
+    const restoreLayout = () => {
+      if (plugin.behaviors.layout.leftPanelTabName.value !== prevTab) plugin.behaviors.layout.leftPanelTabName.next(prevTab);
+      if (plugin.layout.state.regionState.left !== prevLeft)
+        plugin.layout.setProps({ regionState: { ...plugin.layout.state.regionState, left: prevLeft } });
+    };
     try {
       if (!add) { await state.viewer.plugin.clear(); state.loaded.clear(); }
       const trajs = entries.filter(e => e.kind === 'trajectory');
@@ -239,6 +248,7 @@
       console.error(e);
       status(`Failed: ${e.message || e}`, true);
     }
+    try { restoreLayout(); } catch {}
     render();
   }
 
