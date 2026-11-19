@@ -12,6 +12,7 @@ import gzip
 import json
 import mimetypes
 import os
+import re
 import shutil
 import socket
 import sys
@@ -59,6 +60,11 @@ def classify(name: str) -> str | None:
     if ext in SESSION_EXT:
         return "session"
     return None
+
+
+def natural_key(s: str):
+    """Sort 'seed-2' before 'seed-10'."""
+    return [(0, int(t), "") if t.isdigit() else (1, 0, t) for t in re.split(r"(\d+)", s.lower()) if t]
 
 
 def ensure_molstar_asset(name: str) -> Path | None:
@@ -200,7 +206,7 @@ class LabHandler(BaseHTTPRequestHandler):
                 "mtime": st.st_mtime,
                 "kind": None if is_dir else classify(e.name),
             })
-        entries.sort(key=lambda x: (not x["dir"], x["name"].lower()))
+        entries.sort(key=lambda x: (not x["dir"], natural_key(x["name"])))
         self._json({"path": "" if d == self.root else self._rel(d), "entries": entries})
 
     def _find(self, query: str, limit: int = 3000):
@@ -226,7 +232,7 @@ class LabHandler(BaseHTTPRequestHandler):
                             "mtime": st.st_mtime, "kind": kind})
                 if len(out) >= limit:
                     return self._json({"entries": out, "truncated": True})
-        out.sort(key=lambda x: x["path"].lower())
+        out.sort(key=lambda x: natural_key(x["path"]))
         self._json({"entries": out, "truncated": False})
 
     def _file(self, rel: str, raw: bool = False):

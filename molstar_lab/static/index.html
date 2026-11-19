@@ -4,28 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mol* Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
 <link rel="stylesheet" href="/static/molstar.css">
 <style>
   :root {
     --bg: #ffffff; --panel: #f6f7f9; --line: #e2e5ea; --text: #1d2430; --muted: #6b7484;
     --hover: #eaedf2; --sel: #dbe7ff; --accent: #2f6fde; --danger: #c2413a;
     --k-structure: #2f6fde; --k-trajectory: #a35bd6; --k-topology: #1f9d8a;
-    --k-volume: #d9822b; --k-session: #c2413a; --k-dir: #c9a227;
+    --k-volume: #d9822b; --k-session: #c2413a; --k-dir: #4a8fe7;
+    --k-image: #2e9e6a; --k-python: #3776ab;
     --sidebar-w: 300px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #15181d; --panel: #1b1f26; --line: #2b313b; --text: #dfe4ec; --muted: #8b94a5;
-      --hover: #252b35; --sel: #24365a; --accent: #6b9cff;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #15181d; --panel: #1b1f26; --line: #2b313b; --text: #dfe4ec; --muted: #8b94a5;
-    --hover: #252b35; --sel: #24365a; --accent: #6b9cff;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
-    font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; overflow: hidden; }
+    font: 13px/1.4 Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow: hidden; }
+  button, input { font-family: inherit; }
   #app { display: flex; height: 100vh; }
 
   /* ---------- sidebar ---------- */
@@ -33,9 +28,8 @@
     background: var(--panel); border-right: 1px solid var(--line); }
   #app.collapsed #sidebar { display: none; }
   header { display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px; }
-  header .logo { font-weight: 700; letter-spacing: .2px; }
+  header .logo { font-weight: 700; letter-spacing: .2px; flex: 1; font-size: 14px; }
   header .logo span { color: var(--accent); }
-  header .root { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; direction: rtl; text-align: left; }
   .iconbtn { border: 0; background: transparent; color: var(--muted); cursor: pointer; border-radius: 5px;
     width: 26px; height: 26px; display: inline-grid; place-items: center; font-size: 14px; flex: none; }
   .iconbtn:hover { background: var(--hover); color: var(--text); }
@@ -59,7 +53,11 @@
   .row input[type=checkbox] { margin: 0; accent-color: var(--accent); visibility: hidden; }
   .row:hover input[type=checkbox], .row.checked input[type=checkbox], #list.selecting .row input[type=checkbox] { visibility: visible; }
   .row.dir input[type=checkbox] { visibility: hidden !important; }
-  .ico { width: 18px; text-align: center; flex: none; font-size: 13px; }
+  .ico { width: 20px; height: 18px; display: inline-grid; place-items: center; flex: none; font-size: 13px; line-height: 1; }
+  .ico svg { width: 16px; height: 16px; display: block; }
+  .ico.structure { font-size: 18px; }
+  .ico.python { font-size: 9.5px; font-weight: 700; letter-spacing: -.2px; }
+  .ico.unknown { font-weight: 700; color: var(--muted); }
   .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .name small { color: var(--muted); }
   .meta { color: var(--muted); font-size: 11px; flex: none; font-variant-numeric: tabular-nums; }
@@ -101,13 +99,11 @@
   <aside id="sidebar">
     <header>
       <div class="logo">Mol<span>*</span> Lab</div>
-      <div class="root" id="root" title=""></div>
-      <button class="iconbtn" id="themeBtn" title="Toggle light/dark">◐</button>
       <button class="iconbtn" id="collapseBtn" title="Hide file browser">⟨</button>
     </header>
     <div class="toolbar">
-      <label class="search"><span style="color:var(--muted);margin-right:6px">⌕</span>
-        <input id="filter" placeholder="Filter this folder…" autocomplete="off" spellcheck="false"></label>
+      <label class="search">
+        <input id="filter" placeholder="Search this folder…" autocomplete="off" spellcheck="false"></label>
       <button class="iconbtn" id="deepBtn" title="Search all subfolders for structure files">⤓</button>
       <button class="iconbtn" id="molOnlyBtn" title="Show only files Mol* can open">⚛</button>
       <button class="iconbtn" id="upBtn" title="Up one folder">↑</button>
@@ -117,9 +113,8 @@
     <div id="list"></div>
     <footer>
       <div class="actions">
-        <button class="btn primary" id="openSelBtn" disabled>Open selected</button>
-        <button class="btn" id="addSelBtn" disabled>Add</button>
-        <button class="btn" id="clearBtn" title="Remove everything from the 3D scene">Clear scene</button>
+        <button class="btn primary" id="openSelBtn" disabled>Open</button>
+        <button class="btn" id="clearBtn" title="Remove everything from the 3D scene">Clear</button>
       </div>
       <div id="status"></div>
       <div class="hint">Click = open · ⊕ / ⇧-click = add to scene · tick a topology + trajectory to load an MD run</div>
@@ -142,8 +137,14 @@
     set(k, v) { try { localStorage.setItem('molstar-lab:' + k, JSON.stringify(v)); } catch {} },
   };
 
+  const FOLDER_SVG = '<svg viewBox="0 0 16 16"><path fill="currentColor" d="M1.5 3.5A1.5 1.5 0 0 1 3 2h3.1a1.5 1.5 0 0 1 1.06.44L8.4 3.7H13A1.5 1.5 0 0 1 14.5 5.2v7.3A1.5 1.5 0 0 1 13 14H3a1.5 1.5 0 0 1-1.5-1.5z"/></svg>';
+  const IMAGE_SVG = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="1.7" y="2.7" width="12.6" height="10.6" rx="1.6"/><circle cx="5.4" cy="6.2" r="1.2" fill="currentColor" stroke="none"/><path d="M2.2 12.2l3.6-3.6 2.4 2.4 2.2-2.2 3.4 3.4"/></svg>';
+  const IMAGE_EXT = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'tif', 'tiff', 'bmp', 'heic', 'ico']);
   const KIND = {
-    dir:        { ico: '📁', color: 'var(--k-dir)' },
+    dir:        { svg: FOLDER_SVG, color: 'var(--k-dir)' },
+    image:      { svg: IMAGE_SVG, color: 'var(--k-image)' },
+    python:     { ico: 'py', color: 'var(--k-python)' },
+    unknown:    { ico: '?' },
     structure:  { ico: '⬡', color: 'var(--k-structure)', label: 'struct' },
     trajectory: { ico: '▶', color: 'var(--k-trajectory)', label: 'traj' },
     topology:   { ico: '⌬', color: 'var(--k-topology)', label: 'top' },
@@ -159,15 +160,6 @@
     viewer: null,
   };
 
-  // ---------- theme ----------
-  const theme = store.get('theme', null);
-  if (theme) document.documentElement.dataset.theme = theme;
-  $('themeBtn').onclick = () => {
-    const cur = document.documentElement.dataset.theme ||
-      (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    const next = cur === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = next; store.set('theme', next);
-  };
 
   // ---------- status ----------
   let statusTimer;
@@ -304,7 +296,7 @@
       const a = document.createElement('a'); a.textContent = '🔎 all structure files under root'; a.onclick = () => setDeep(false);
       crumbs.append(a);
     } else {
-      crumbs.append(mk('⌂ ' + (window.__rootName || 'root'), ''));
+      crumbs.append(mk(window.__rootName || 'root', ''));
       parts.forEach((p, i) => { crumbs.append(document.createTextNode('/')); crumbs.append(mk(p, parts.slice(0, i + 1).join('/'))); });
     }
 
@@ -318,15 +310,19 @@
     }
     for (const e of items) {
       const row = document.createElement('div');
-      const k = e.dir ? KIND.dir : KIND[e.kind];
+      const iconKind = e.dir ? 'dir' : e.kind ? e.kind
+        : IMAGE_EXT.has(ext(e.name)) ? 'image' : ext(e.name) === 'py' ? 'python' : 'unknown';
+      const k = KIND[e.dir ? 'dir' : e.kind];   // Mol*-readable kinds only (badges etc.)
+      const ik = KIND[iconKind];
       row.className = 'row' + (e.dir ? ' dir' : '') + (!e.dir && !e.kind ? ' other' : '') +
         (state.checked.has(e.path) ? ' checked' : '') + (state.loaded.has(e.path) ? ' loaded' : '');
       row.title = e.path;
 
       const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = state.checked.has(e.path);
       cb.onclick = (ev) => { ev.stopPropagation(); toggleCheck(e); };
-      const ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = k ? k.ico : '·';
-      if (k) ico.style.color = k.color;
+      const ico = document.createElement('span'); ico.className = 'ico ' + iconKind;
+      if (ik.svg) ico.innerHTML = ik.svg; else ico.textContent = ik.ico;
+      if (ik.color) ico.style.color = ik.color;
       const name = document.createElement('span'); name.className = 'name';
       if (state.deep && e.path.includes('/')) {
         const dir = e.path.slice(0, e.path.lastIndexOf('/') + 1);
@@ -348,12 +344,12 @@
       list.append(row);
     }
     const n = state.checked.size;
-    $('openSelBtn').disabled = $('addSelBtn').disabled = n === 0;
-    $('openSelBtn').textContent = n ? `Open selected (${n})` : 'Open selected';
+    $('openSelBtn').disabled = n === 0;
+    $('openSelBtn').textContent = n > 1 ? `Open (${n})` : 'Open';
     $('deepBtn').classList.toggle('on', state.deep);
     $('molOnlyBtn').classList.toggle('on', state.molOnly);
     $('upBtn').disabled = !state.path || state.deep;
-    $('filter').placeholder = state.deep ? 'Search all subfolders…' : 'Filter this folder…';
+    $('filter').placeholder = state.deep ? 'Search all subfolders…' : 'Search this folder…';
   }
 
   const checkedEntries = () => [...state.checked].map(p => state.allSeen.get(p)).filter(Boolean);
@@ -385,7 +381,6 @@
     if (ev.key === 'Escape') { $('filter').value = ''; state.deep ? setDeep(false) : render(); }
   };
   $('openSelBtn').onclick = () => { const s = checkedEntries(); state.checked.clear(); open(s); };
-  $('addSelBtn').onclick = () => { const s = checkedEntries(); state.checked.clear(); open(s, { add: true }); };
   $('clearBtn').onclick = async () => { if (state.viewer) { await state.viewer.plugin.clear(); state.loaded.clear(); render(); status('Scene cleared'); } };
   window.addEventListener('hashchange', () => {
     const p = decodeURIComponent(location.hash.slice(1) || '');
@@ -426,7 +421,6 @@
     try {
       const info = await api('/api/info');
       window.__rootName = info.name;
-      $('root').textContent = info.root; $('root').title = info.root;
       document.title = `${info.name} — Mol* Lab`;
     } catch {}
     await refresh();

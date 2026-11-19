@@ -19,7 +19,7 @@ No pipx yet? On macOS run `brew install pipx && pipx ensurepath`; on Linux run `
 ## What you get
 - A sidebar file browser (folders, breadcrumbs, filter). New files show up on their own every 3 s.
 - **Click** a file to open it. **⊕ or Shift-click** adds it to the current scene. **⌘-click or the checkboxes** select several files at once.
-- Tick a **topology/structure + trajectory** (e.g. `.psf` + `.dcd`, `.gro` + `.xtc`) and press *Open selected* to load an MD run.
+- Tick a **topology/structure + trajectory** (e.g. `.psf` + `.dcd`, `.gro` + `.xtc`) and press *Open* to load an MD run.
 - **⤓** searches every subfolder for files Mol* can read. **⚛** hides files Mol* can't open.
 - `.gz` files are decompressed on the fly. Supported: PDB/mmCIF/BCIF, PDBQT, GRO, MOL/MOL2/SDF, XYZ, PSF/PRMTOP/TOP, XTC/TRR/DCD/NC/LAMMPS, CCP4/MRC/MAP/DSN6/CUBE/DX, and `.molj`/`.molx`/`.mvsj` sessions.
 - You can also drag files from Finder straight into the viewer.
