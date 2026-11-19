@@ -50,3 +50,8 @@ git clone https://github.com/swamyshogan/molstar-lab.git
 cd molstar-lab
 pipx install -e .    # edits to the code take effect immediately
 ```
+
+## Citing Mol*
+molstar-lab is only a launcher; the viewer is [Mol*](https://github.com/molstar/molstar). If you use it in your work, please cite Mol*:
+
+> David Sehnal, Sebastian Bittrich, Mandar Deshpande, Radka Svobodová, Karel Berka, Václav Bazgier, Sameer Velankar, Stephen K Burley, Jaroslav Koča, Alexander S Rose. [Mol* Viewer: modern web app for 3D visualization and analysis of large biomolecular structures](https://doi.org/10.1093/nar/gkab314). *Nucleic Acids Research*, 2021. https://doi.org/10.1093/nar/gkab314
