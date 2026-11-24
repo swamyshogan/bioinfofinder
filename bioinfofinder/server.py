@@ -1,6 +1,6 @@
-"""molstar-lab: a Jupyter-Lab-style local launcher for the Mol* viewer.
+"""bioinfoFinder: a Jupyter-Lab-style local launcher for the Mol* viewer.
 
-Run `molstar-lab` inside any folder; a local server starts, your browser opens
+Run `bioinfofinder` inside any folder; a local server starts, your browser opens
 Mol*, and a sidebar lets you browse every file under that folder and load it.
 """
 
@@ -26,9 +26,9 @@ from pathlib import Path
 
 from . import __version__
 
-MOLSTAR_VERSION = os.environ.get("MOLSTAR_LAB_MOLSTAR_VERSION", "5.13.1")
+MOLSTAR_VERSION = os.environ.get("BIOINFOFINDER_MOLSTAR_VERSION", "5.13.1")
 CDN = "https://cdn.jsdelivr.net/npm/molstar@{ver}/build/viewer/{name}"
-CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "molstar-lab"
+CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "bioinfofinder"
 STATIC_DIR = Path(__file__).parent / "static"
 
 # Extensions Mol* can open (lower-case, without a trailing .gz / .zip).
@@ -75,25 +75,25 @@ def ensure_molstar_asset(name: str) -> Path | None:
     target.parent.mkdir(parents=True, exist_ok=True)
     url = CDN.format(ver=MOLSTAR_VERSION, name=name)
     try:
-        print(f"[molstar-lab] downloading Mol* {MOLSTAR_VERSION} {name} (first run only)...", file=sys.stderr)
+        print(f"[bioinfofinder] downloading Mol* {MOLSTAR_VERSION} {name} (first run only)...", file=sys.stderr)
         tmp = target.with_suffix(target.suffix + ".part")
         with urllib.request.urlopen(url, timeout=60) as r, open(tmp, "wb") as f:
             shutil.copyfileobj(r, f)
         tmp.replace(target)
         return target
     except Exception as e:  # offline and not cached
-        print(f"[molstar-lab] could not fetch {url}: {e}", file=sys.stderr)
+        print(f"[bioinfofinder] could not fetch {url}: {e}", file=sys.stderr)
         return None
 
 
 class LabHandler(BaseHTTPRequestHandler):
     root: Path = Path.cwd()
     show_hidden: bool = False
-    server_version = f"molstar-lab/{__version__}"
+    server_version = f"bioinfofinder/{__version__}"
 
     # ---- helpers -------------------------------------------------------
     def log_message(self, fmt, *args):  # quiet by default
-        if os.environ.get("MOLSTAR_LAB_DEBUG"):
+        if os.environ.get("BIOINFOFINDER_DEBUG"):
             super().log_message(fmt, *args)
 
     def _send(self, status: int, body: bytes, ctype: str, extra: dict | None = None):
@@ -261,7 +261,7 @@ def find_port(host: str, start: int, tries: int = 50) -> int:
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
-        prog="molstar-lab",
+        prog="bioinfofinder",
         description="Open Mol* in your browser with a file browser rooted at a local folder (like `jupyter lab`).",
     )
     ap.add_argument("target", nargs="?", default=".", help="folder to serve, or a structure file to open (default: .)")
@@ -269,12 +269,12 @@ def main(argv=None):
     ap.add_argument("--host", default="127.0.0.1", help="bind address (default 127.0.0.1 = this machine only)")
     ap.add_argument("--no-browser", action="store_true", help="don't open a browser tab")
     ap.add_argument("--hidden", action="store_true", help="show dotfiles / hidden folders")
-    ap.add_argument("--version", action="version", version=f"molstar-lab {__version__} (Mol* {MOLSTAR_VERSION})")
+    ap.add_argument("--version", action="version", version=f"bioinfofinder {__version__} (Mol* {MOLSTAR_VERSION})")
     args = ap.parse_args(argv)
 
     target = Path(args.target).expanduser().resolve()
     if not target.exists():
-        raise SystemExit(f"molstar-lab: {target} does not exist")
+        raise SystemExit(f"bioinfofinder: {target} does not exist")
     open_rel = None
     if target.is_file():
         root = target.parent
@@ -297,9 +297,9 @@ def main(argv=None):
         url += "?open=" + urllib.parse.quote(open_rel)
 
     if args.host not in ("127.0.0.1", "localhost", "::1"):
-        print(f"[molstar-lab] WARNING: listening on {args.host}; anyone who can reach this port can read files under {root}",
+        print(f"[bioinfofinder] WARNING: listening on {args.host}; anyone who can reach this port can read files under {root}",
               file=sys.stderr)
-    print(f"\n  Mol* Lab {__version__}  ·  Mol* {MOLSTAR_VERSION}")
+    print(f"\n  bioinfoFinder {__version__}  ·  Mol* {MOLSTAR_VERSION}")
     print(f"  Serving  {root}")
     print(f"  Open     {url}\n")
     print("  Press Ctrl+C to stop.\n")
@@ -309,7 +309,7 @@ def main(argv=None):
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n[molstar-lab] shutting down.")
+        print("\n[bioinfofinder] shutting down.")
     finally:
         httpd.server_close()
 

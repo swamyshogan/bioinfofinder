@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mol* Lab</title>
+<title>bioinfoFinder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
@@ -98,7 +98,7 @@
 <div id="app">
   <aside id="sidebar">
     <header>
-      <div class="logo">Mol<span>*</span> Lab</div>
+      <div class="logo">bioinfo<span>Finder</span></div>
       <button class="iconbtn" id="collapseBtn" title="Hide file browser">⟨</button>
     </header>
     <div class="toolbar">
@@ -133,8 +133,8 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const store = {
-    get(k, d) { try { const v = localStorage.getItem('molstar-lab:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
-    set(k, v) { try { localStorage.setItem('molstar-lab:' + k, JSON.stringify(v)); } catch {} },
+    get(k, d) { try { const v = localStorage.getItem('bioinfofinder:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('bioinfofinder:' + k, JSON.stringify(v)); } catch {} },
   };
 
   const FOLDER_SVG = '<svg viewBox="0 0 16 16"><path fill="currentColor" d="M1.5 3.5A1.5 1.5 0 0 1 3 2h3.1a1.5 1.5 0 0 1 1.06.44L8.4 3.7H13A1.5 1.5 0 0 1 14.5 5.2v7.3A1.5 1.5 0 0 1 13 14H3a1.5 1.5 0 0 1-1.5-1.5z"/></svg>';
@@ -431,7 +431,7 @@
     try {
       const info = await api('/api/info');
       window.__rootName = info.name;
-      document.title = `${info.name} — Mol* Lab`;
+      document.title = `${info.name} — bioinfoFinder`;
     } catch {}
     await refresh();
     await initViewer();
