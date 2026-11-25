@@ -4,8 +4,6 @@
 
 Stop dragging structure files into a browser tab one at a time. Run `bioinfofinder` in any folder and Mol\* opens in your browser, with a file browser for everything under that folder.
 
-<sub>Ideation by **Shogan** · Executed by **Claude**</sub>
-
 ![bioinfoFinder demo: open a crystal structure, search all seed folders, overlay five models](docs/demo.gif)
 
 ```bash
