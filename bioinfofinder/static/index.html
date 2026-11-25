@@ -99,7 +99,8 @@
     min-width: 0; white-space: nowrap; overflow: hidden; }
   .crumbs a { color: var(--accent); text-decoration: none; cursor: pointer; }
   .crumbs a:hover { text-decoration: underline; }
-  .crumbs b { font-weight: 600; }
+  .crumbs > *, .crumbs.measuring b { flex: none; }
+  .crumbs b { font-weight: 600; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .crumbs .sep { color: var(--muted); padding: 0 1px; }
   .spacer { flex: 1; }
   #status.err { color: #c2413a; }
@@ -363,13 +364,22 @@ function renderSelbar() {
   $('addBtn').textContent = n > 1 ? `Add to scene (${n})` : 'Add to scene';
   $('addBtn').disabled = !n;
 }
+// When the path is too long, the top-most folders fold into "…" first, so the latest folders stay visible.
 function renderCrumbs() {
   const parts = S.current ? S.current.split('/') : [];
-  const items = [`<a data-path="">${esc(S.root)}</a>`].concat(parts.map((p, i) => i === parts.length - 1
-    ? `<b>${esc(p)}</b>` : `<a data-path="${esc(parts.slice(0, i + 1).join('/'))}">${esc(p)}</a>`));
-  if (!parts.length) items[0] = `<b>${esc(S.root)}</b>`;
-  $('crumbs').innerHTML = items.join('<span class="sep">/</span>') + (isDir(S.current) ? '<span class="sep">/</span>' : '');
+  const segs = [{ label: S.root, path: '' }, ...parts.map((p, i) => ({ label: p, path: parts.slice(0, i + 1).join('/') }))];
+  const sep = '<span class="sep">/</span>', trail = isDir(S.current) ? sep : '', el = $('crumbs');
+  const items = segs.map((s, i) => i === segs.length - 1 ? `<b>${esc(s.label)}</b>` : `<a data-path="${esc(s.path)}">${esc(s.label)}</a>`);
+  el.classList.add('measuring');                         // measure at full width; the last name may shrink only after
+  for (let from = 0; from < segs.length; from++) {      // `from` = first segment still shown in full
+    const hidden = from ? segs[from - 1] : null;
+    const more = hidden ? `<a data-path="${esc(hidden.path)}" title="${esc([S.root, hidden.path].filter(Boolean).join('/'))}">…</a>` : '';
+    el.innerHTML = [more, ...items.slice(from)].filter(Boolean).join(sep) + trail;
+    if (el.scrollWidth <= el.clientWidth) break;
+  }
+  el.classList.remove('measuring');
 }
+new ResizeObserver(() => renderCrumbs()).observe(document.querySelector('.pathbar'));
 function renderTabs() {
   $('tabs').innerHTML = S.tabs.map(t => {
     const title = t.text ? baseName(t.text) : t.files.length ? baseName(t.files[0]) + (t.files.length > 1 ? ` +${t.files.length - 1}` : '') : 'New tab';
