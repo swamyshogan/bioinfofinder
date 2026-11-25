@@ -133,6 +133,8 @@ class LabHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(size))
         self.send_header("Cache-Control", "max-age=31536000" if cache else "no-store")
+        if ctype == "image/svg+xml":  # an SVG opened on its own must not run scripts inside the app
+            self.send_header("Content-Security-Policy", "sandbox; default-src 'none'; style-src 'unsafe-inline'")
         self.end_headers()
         if self.command != "HEAD":
             with open(path, "rb") as f:
@@ -217,9 +219,9 @@ class LabHandler(BaseHTTPRequestHandler):
                 dirnames[:] = [n for n in dirnames if not n.startswith(".")]
             dirnames[:] = [n for n in dirnames if n not in ("node_modules", "__pycache__")]
             for fn in filenames:
-                kind = classify(fn)
-                if not kind or (not self.show_hidden and fn.startswith(".")):
+                if not self.show_hidden and fn.startswith("."):
                     continue
+                kind = classify(fn)
                 full = Path(dirpath) / fn
                 rel = full.relative_to(self.root).as_posix()
                 if query and query not in rel.lower():
@@ -244,7 +246,18 @@ class LabHandler(BaseHTTPRequestHandler):
             with gzip.open(p, "rb") as f:
                 data = f.read()
             return self._send(200, data, "application/octet-stream")
-        return self._serve_file(p, "application/octet-stream")
+        return self._serve_file(p, safe_type(p.name))
+
+
+# Types the page may show inline (images, PDF, plain text). Anything else, including HTML and
+# JavaScript from the user's folder, is sent as a download type so it never runs inside the app.
+INLINE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "image/bmp",
+                "image/tiff", "image/vnd.microsoft.icon", "image/x-icon", "application/pdf"}
+
+
+def safe_type(name: str) -> str:
+    t = mimetypes.guess_type(name)[0]
+    return t if t in INLINE_TYPES else "application/octet-stream"
 
 
 def find_port(host: str, start: int, tries: int = 50) -> int:

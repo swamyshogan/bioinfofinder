@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bioinfofinder"
-version = "0.2.0"
+version = "1.0.0"
 description = "Jupyter-Lab-style local launcher for the Mol* molecular viewer: run it in a folder, browse and open structures in the browser."
 readme = "README.md"
 requires-python = ">=3.8"

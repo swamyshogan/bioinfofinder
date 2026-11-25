@@ -4,7 +4,7 @@
 
 Stop dragging structure files into a browser tab one at a time. Run `bioinfofinder` in any folder and Mol\* opens in your browser, with a file browser for everything under that folder.
 
-![bioinfoFinder demo: open a crystal structure, search all seed folders, overlay five models](docs/demo.gif)
+![bioinfoFinder: a folder tree on the left, the path on top, tabs, and a protein open in Mol*](docs/screenshot.png)
 
 ```bash
 cd ~/my_project/output
@@ -13,10 +13,13 @@ bioinfofinder
 
 ## Features
 
-- **A file browser in the sidebar.** Folders, breadcrumbs and a filter. New files show up on their own every 3 s.
-- **Click to open, Shift-click to overlay.** **⊕ or Shift-click** adds a file to the current scene. **⌘-click or the checkboxes** select several files at once.
-- **MD trajectories.** Tick a **topology/structure + trajectory** (e.g. `.psf` + `.dcd`, `.gro` + `.xtc`) and press *Open* to load the run.
-- **Search every subfolder.** **⤓** finds every file Mol\* can read under the folder. **⚛** hides files Mol\* can't open.
+- **A file tree in the sidebar.** Folders open in place, the full path sits on top like a `pwd` line, and new files show up on their own while a job is still running.
+- **Tabs.** Each tab is its own scene. Right-click a file → *Open in new tab* (or ⌘-click / middle-click) to compare structures side by side.
+- **Open several at once.** Hover a file and tick its box, then *Add to scene* to overlay models, e.g. one model from every seed.
+- **MD trajectories.** Tick a topology/structure + trajectory (e.g. `.psf` + `.dcd`, `.gro` + `.xtc`) and *Add to scene* loads the run.
+- **Viewer | Raw.** Flip any structure tab to its raw text, with line numbers.
+- **Prediction outputs, not just structures.** JSON confidence files and `.npz` arrays (pLDDT, PAE, …) open as text; PNG/JPG/SVG images and PDFs open as a preview.
+- **Search every subfolder.** *Go to file* (press `/`) finds any file under the folder.
 - **Lots of formats.** PDB/mmCIF/BCIF, PDBQT, GRO, MOL/MOL2/SDF, XYZ, PSF/PRMTOP/TOP, XTC/TRR/DCD/NC/LAMMPS, CCP4/MRC/MAP/DSN6/CUBE/DX, and `.molj`/`.molx`/`.mvsj` sessions. `.gz` files are decompressed on the fly.
 - **Drag and drop.** You can also drag files from Finder straight into the viewer.
 - **Zero dependencies.** Only the Python standard library. Runs on macOS and Linux.

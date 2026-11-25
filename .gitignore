@@ -4,3 +4,6 @@ __pycache__/
 build/
 dist/
 .DS_Store
+
+# design sandbox, not part of the release
+mockup/
