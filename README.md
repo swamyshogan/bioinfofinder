@@ -57,6 +57,8 @@ bioinfoFinder is only a launcher; the viewer is [Mol*](https://github.com/molsta
 > David Sehnal, Sebastian Bittrich, Mandar Deshpande, Radka Svobodová, Karel Berka, Václav Bazgier, Sameer Velankar, Stephen K Burley, Jaroslav Koča, Alexander S Rose. [Mol* Viewer: modern web app for 3D visualization and analysis of large biomolecular structures](https://doi.org/10.1093/nar/gkab314). *Nucleic Acids Research*, 2021. https://doi.org/10.1093/nar/gkab314
 
 ## License
-bioinfoFinder is released under the [MIT License](LICENSE). Copyright (c) 2026 Shogan Swamy.
+[MIT](LICENSE). Use it, fork it, share it.
 
 It loads the [Mol*](https://github.com/molstar/molstar) Viewer, which is also MIT-licensed (Copyright (c) Mol* contributors). bioinfoFinder is an independent project, not affiliated with or endorsed by the Mol* team.
+
+Ideation by Shogan · Executed by Claude
